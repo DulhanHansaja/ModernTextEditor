@@ -22,6 +22,7 @@ class HomeViewModel(private val repository: FileRepository) : ViewModel() {
     fun checkForRecoveredFiles(context: Context) {
         viewModelScope.launch {
             val files = AutoCacheManager(context).getRecoverableFiles()
+            android.util.Log.d("HomeViewModel", "Detected ${files.size} recovered files")
             _recoveredFiles.value = files
         }
     }

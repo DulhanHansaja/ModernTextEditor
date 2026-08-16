@@ -15,7 +15,7 @@ class AutoCacheManager(private val context: Context) {
         val metaFile = File(cacheDir, "${fileName.hashCode()}.meta")
         
         cacheFile.writeText(content)
-        metaFile.writeText("${fileName}\n${uri ?: ""}")
+        metaFile.writeText("${fileName}\n${uri ?: "NULL_URI"}")
     }
 
     fun getRecoverableFiles(): List<RecoveredFile> {
@@ -25,10 +25,10 @@ class AutoCacheManager(private val context: Context) {
             val metaFile = File(cacheDir, "$hash.meta")
             if (metaFile.exists()) {
                 val lines = metaFile.readLines()
-                if (lines.size >= 2) {
+                if (lines.isNotEmpty()) {
                     files.add(RecoveredFile(
                         name = lines[0],
-                        uri = lines[1].ifEmpty { null },
+                        uri = if (lines.size > 1 && lines[1] != "NULL_URI") lines[1] else null,
                         content = cacheFile.readText(),
                         hash = hash
                     ))

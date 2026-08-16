@@ -71,6 +71,7 @@ fun HomeScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
+            context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             val name = try {
                 context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
                     val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)

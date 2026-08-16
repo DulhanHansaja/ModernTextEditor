@@ -29,7 +29,8 @@ fun EditorScreen(
     viewModel: EditorViewModel,
     onBack: () -> Unit,
     onShowHistory: () -> Unit,
-    onSaveVersion: (String) -> Unit
+    onSaveVersion: (String) -> Unit,
+    onFileRenamed: (String, String) -> Unit
 ) {
     val fileName by viewModel.fileName.collectAsState()
     val content by viewModel.content.collectAsState()
@@ -67,7 +68,19 @@ fun EditorScreen(
         contract = ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
         uri?.let {
+            val name = try {
+                context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (cursor.moveToFirst()) {
+                        cursor.getString(nameIndex)
+                    } else "Unknown"
+                } ?: "Unknown"
+            } catch (e: Exception) {
+                "Unknown"
+            }
             viewModel.saveFile(context, it.toString())
+            viewModel.setFile(name, it.toString(), viewModel.content.value)
+            onFileRenamed(name, it.toString())
         }
     }
 

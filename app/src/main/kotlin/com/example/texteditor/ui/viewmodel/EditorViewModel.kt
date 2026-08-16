@@ -62,9 +62,9 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
         autoCacheJob = viewModelScope.launch {
             while (isActive) {
                 delay(10000)
-                val currentName = _fileName.value
+                val currentName = _fileName.value ?: "Untitled"
                 val currentContent = _content.value
-                if (_isDirty.value && currentName != null) {
+                if (_isDirty.value) {
                     autoCacheManager.saveCache(currentName, _fileUri.value, currentContent)
                 }
             }
@@ -114,12 +114,17 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
     fun loadFile(context: Context, name: String, uriString: String) {
         val uri = Uri.parse(uriString)
         try {
+            // Re-request permissions just in case (sometimes needed for recent files)
+            try {
+                context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            } catch (e: Exception) {}
+            
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val content = inputStream.bufferedReader().use { it.readText() }
                 setFile(name, uriString, content)
             }
         } catch (e: Exception) {
-            // Error handling could be added later
+            android.util.Log.e("EditorViewModel", "Error loading file", e)
         }
     }
 

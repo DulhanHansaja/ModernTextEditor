@@ -107,6 +107,9 @@ fun TextEditorMain(app: com.example.texteditor.TextEditorApp) {
                     editorViewModel.fileUri.value?.let { uri ->
                         vcViewModel.saveVersion(uri, editorViewModel.content.value, label, editorViewModel.baseVersionId.value)
                     }
+                },
+                onFileRenamed = { name, uri ->
+                    homeViewModel.addRecentFile(name, uri)
                 }
             )
         }
