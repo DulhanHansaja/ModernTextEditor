@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -246,10 +247,18 @@ fun EditorScreen(
                 }
             }
             
+                val scrollState = rememberScrollState()
                 BasicTextField(
                     value = content,
                     onValueChange = { if (!isReadOnly) viewModel.onContentChanged(it) },
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(8.dp).verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .verticalScroll(rememberScrollState())
+                        .let { 
+                            if (!isWordWrap) it.horizontalScroll(scrollState) else it 
+                        },
                     readOnly = isReadOnly,
                     textStyle = TextStyle(
                         fontFamily = FontFamily.Monospace,
@@ -265,10 +274,12 @@ fun EditorScreen(
                         currentSearchIndex = currentSearchIndex
                     ),
                     decorationBox = { innerTextField ->
-                        if (content.isEmpty()) {
-                            Text("Start typing...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        Box {
+                            if (content.isEmpty()) {
+                                Text("Start typing...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
                     }
                 )
             }
