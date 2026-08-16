@@ -265,7 +265,7 @@ fun EditorScreen(
                         modifier = Modifier
                             .padding(8.dp)
                             .then(
-                                if (isWordWrap) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max).widthIn(min = 1000.dp)
+                                if (isWordWrap) Modifier.fillMaxWidth() else Modifier.width(2000.dp)
                             ),
                         readOnly = isReadOnly,
                         textStyle = TextStyle(
