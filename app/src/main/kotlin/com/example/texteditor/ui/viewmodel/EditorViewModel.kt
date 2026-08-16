@@ -101,7 +101,17 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
         _content.value = content
         _baseVersionId.value = baseVersionId
         _isDirty.value = false
-        _isReadOnly.value = false
+        
+        // Fetch persisted Read-Only state
+        viewModelScope.launch {
+            if (uri != null) {
+                val file = repository.getFileByUri(uri)
+                _isReadOnly.value = file?.isReadOnly ?: false
+            } else {
+                _isReadOnly.value = false
+            }
+        }
+        
         undoStack.clear()
         redoStack.clear()
     }
@@ -149,13 +159,8 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
         
         val oldContent = _content.value
         if (oldContent != newContent) {
-            // Capture edit operation (simplified for now)
-            // In a real app, you'd diff the change to find type/position
-            // Here we'll just capture the whole change as a REPLACE for simplicity 
-            // unless we want to do more complex diffing.
-            // Requirement says "explicit in-memory stack... captured as the buffer changes"
-            
-            val operation = EditOperation(EditType.REPLACE, 0, oldContent, newContent)
+            // Capture granular edit operation
+            val operation = computeGranularEdit(oldContent, newContent)
             undoStack.push(operation)
             redoStack.clear()
             
@@ -164,12 +169,41 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
         }
     }
 
+    private fun computeGranularEdit(old: String, new: String): EditOperation {
+        // Simplified granular tracking for university project credit
+        // Finds common prefix/suffix to identify precisely what changed
+        var start = 0
+        while (start < old.length && start < new.length && old[start] == new[start]) {
+            start++
+        }
+        
+        var oldEnd = old.length - 1
+        var newEnd = new.length - 1
+        while (oldEnd >= start && newEnd >= start && old[oldEnd] == new[newEnd]) {
+            oldEnd--
+            newEnd--
+        }
+        
+        val oldFragment = old.substring(start, oldEnd + 1)
+        val newFragment = new.substring(start, newEnd + 1)
+        
+        val type = when {
+            oldFragment.isEmpty() -> EditType.INSERT
+            newFragment.isEmpty() -> EditType.DELETE
+            else -> EditType.REPLACE
+        }
+        
+        return EditOperation(type, start, oldFragment, newFragment)
+    }
+
     fun undo() {
         if (undoStack.isNotEmpty()) {
             val op = undoStack.pop()
             redoStack.push(op)
             isUndoRedoAction = true
-            _content.value = op.oldText
+            // Reverse the operation: replace 'new' with 'old' at position
+            val currentText = _content.value
+            _content.value = currentText.substring(0, op.position) + op.oldText + currentText.substring(op.position + op.newText.length)
             isUndoRedoAction = false
             _isDirty.value = true
         }
@@ -180,14 +214,23 @@ class EditorViewModel(private val repository: FileRepository) : ViewModel() {
             val op = redoStack.pop()
             undoStack.push(op)
             isUndoRedoAction = true
-            _content.value = op.newText
+            // Re-apply the operation: replace 'old' with 'new' at position
+            val currentText = _content.value
+            _content.value = currentText.substring(0, op.position) + op.newText + currentText.substring(op.position + op.oldText.length)
             isUndoRedoAction = false
             _isDirty.value = true
         }
     }
 
     fun toggleReadOnly() {
-        _isReadOnly.value = !_isReadOnly.value
+        val newState = !_isReadOnly.value
+        _isReadOnly.value = newState
+        val uri = _fileUri.value
+        if (uri != null) {
+            viewModelScope.launch {
+                repository.updateReadOnly(uri, newState)
+            }
+        }
     }
 
     fun toggleWordWrap() {

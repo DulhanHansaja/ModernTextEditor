@@ -13,4 +13,15 @@ class FileRepository(private val fileDao: FileDao) {
             fileDao.insertFile(FileEntity(name = name, uri = uri))
         }
     }
+
+    suspend fun updateReadOnly(uri: String, isReadOnly: Boolean) {
+        val existing = fileDao.getFileByUri(uri)
+        if (existing != null) {
+            fileDao.updateFile(existing.copy(isReadOnly = isReadOnly))
+        }
+    }
+
+    suspend fun getFileByUri(uri: String): FileEntity? {
+        return fileDao.getFileByUri(uri)
+    }
 }

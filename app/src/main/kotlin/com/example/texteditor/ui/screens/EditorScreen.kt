@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.texteditor.ui.viewmodel.EditorViewModel
 import com.example.texteditor.editor.SyntaxHighlighter
 
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorScreen(
@@ -243,16 +246,17 @@ fun EditorScreen(
                 }
             }
             
-                TextField(
+                BasicTextField(
                     value = content,
                     onValueChange = { if (!isReadOnly) viewModel.onContentChanged(it) },
-                    modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(8.dp).verticalScroll(rememberScrollState()),
                     readOnly = isReadOnly,
-                    placeholder = { Text("Start typing...") },
                     textStyle = TextStyle(
                         fontFamily = FontFamily.Monospace,
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     visualTransformation = SyntaxHighlighter(
                         keywords = keywords,
                         isMarkdown = isMarkdown,
@@ -260,13 +264,12 @@ fun EditorScreen(
                         searchIndices = searchIndices,
                         currentSearchIndex = currentSearchIndex
                     ),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
+                    decorationBox = { innerTextField ->
+                        if (content.isEmpty()) {
+                            Text("Start typing...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        }
+                        innerTextField()
+                    }
                 )
             }
         }
