@@ -247,41 +247,50 @@ fun EditorScreen(
                 }
             }
             
-                val scrollState = rememberScrollState()
-                BasicTextField(
-                    value = content,
-                    onValueChange = { if (!isReadOnly) viewModel.onContentChanged(it) },
+                val verticalScrollState = rememberScrollState()
+                val horizontalScrollState = rememberScrollState()
+                
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(8.dp)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(verticalScrollState)
                         .let { 
-                            if (!isWordWrap) it.horizontalScroll(scrollState) else it 
-                        },
-                    readOnly = isReadOnly,
-                    textStyle = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    visualTransformation = SyntaxHighlighter(
-                        keywords = keywords,
-                        isMarkdown = isMarkdown,
-                        searchQuery = activeSearchQuery,
-                        searchIndices = searchIndices,
-                        currentSearchIndex = currentSearchIndex
-                    ),
-                    decorationBox = { innerTextField ->
-                        Box {
-                            if (content.isEmpty()) {
-                                Text("Start typing...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                            }
-                            innerTextField()
+                            if (!isWordWrap) it.horizontalScroll(horizontalScrollState) else it 
                         }
-                    }
-                )
+                ) {
+                    BasicTextField(
+                        value = content,
+                        onValueChange = { if (!isReadOnly) viewModel.onContentChanged(it) },
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .then(
+                                if (isWordWrap) Modifier.fillMaxWidth() else Modifier.width(IntrinsicSize.Max).widthIn(min = 1000.dp)
+                            ),
+                        readOnly = isReadOnly,
+                        textStyle = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        visualTransformation = SyntaxHighlighter(
+                            keywords = keywords,
+                            isMarkdown = isMarkdown,
+                            searchQuery = activeSearchQuery,
+                            searchIndices = searchIndices,
+                            currentSearchIndex = currentSearchIndex
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box {
+                                if (content.isEmpty()) {
+                                    Text("Start typing...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                                }
+                                innerTextField()
+                            }
+                        }
+                    )
+                }
             }
         }
     }
